@@ -1,0 +1,45 @@
+# syntax=docker/dockerfile:1.7
+
+FROM python:3.11-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /build
+
+RUN python -m venv /opt/venv
+
+COPY requirements-ai.txt .
+
+RUN /opt/venv/bin/pip install --no-cache-dir --upgrade pip \
+    && /opt/venv/bin/pip install --no-cache-dir -r requirements-ai.txt
+
+
+FROM python:3.11-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PATH="/opt/venv/bin:$PATH"
+ENV AI_HOST=0.0.0.0
+ENV AI_PORT=9000
+ENV SERVICE_NAME=ai-service
+ENV SERVICE_VERSION=0.5.0
+
+WORKDIR /app
+
+RUN addgroup --system appgroup \
+    && adduser --system --ingroup appgroup --home /app appuser
+
+COPY --from=builder /opt/venv /opt/venv
+COPY src/ai_service/ ./
+
+RUN chown -R appuser:appgroup /app
+
+USER appuser
+
+EXPOSE 9000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9000/health', timeout=3).read()" || exit 1
+
+CMD ["sh", "-c", "uvicorn main:app --host ${AI_HOST} --port ${AI_PORT}"]

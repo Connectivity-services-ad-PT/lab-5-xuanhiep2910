@@ -1,0 +1,18 @@
+Lab 05 Compose stack health evidence
+Generated: 2026-06-14
+
+API /health:
+{"status":"ok","service":"iot-ingestion","version":"0.5.0","db_ready":true,"ai_ready":true}
+
+AI /health:
+{"status":"ok","service":"ai-service","version":"0.5.0"}
+
+DB pg_isready:
+/var/run/postgresql:5432 - accepting connections
+
+Container status:
+fit4110-api-lab05   fit4110/iot-ingestion:v0.1.0-team-iot   healthy   0.0.0.0:8000->8000/tcp
+fit4110-ai-lab05    fit4110/ai-service:v0.1.0-team-iot      healthy   0.0.0.0:9000->9000/tcp
+fit4110-db-lab05    postgres:15-alpine                      healthy   0.0.0.0:5432->5432/tcp
+
+Newman: 8 requests, 13 assertions, 0 failed
